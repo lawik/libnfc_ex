@@ -5,6 +5,7 @@
 #include <string.h>
 #include <erl_nif.h>
 #include <nfc/nfc.h>
+#include "nfc-internal.h"
 
 /* *** Device list/open/dealloc *************************************************** */
 
@@ -208,6 +209,14 @@ static int libnfc_nif_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     );
 
   nfc_init((nfc_context**) priv);
+
+  /* The only driver compiled into the vendored libnfc is pn532_i2c, whose
+   * scan probes the I2C bus and is therefore classified as INTRUSIVE.
+   * Without this, nfc_list_devices() always returns an empty list. The
+   * upstream opt-ins (config file / LIBNFC_INTRUSIVE_SCAN env var) are not
+   * usable here: there is no /etc/nfc on embedded targets and the BEAM
+   * does not write os:putenv() through to the libc environment. */
+  ((nfc_context*) *priv)->allow_intrusive_scan = true;
 
   return 0;
 }

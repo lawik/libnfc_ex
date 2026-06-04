@@ -2,6 +2,15 @@
 
 # `libnfc_ex`
 
+> **Fork note:** this fork vendors libnfc 1.8.0 (PN532 I2C driver only) under
+> `c_src/` and statically links it into the NIF, building with `elixir_make`.
+> No system libnfc is required and the NIF cross-compiles for Nerves targets
+> out of the box. On non-Linux hosts (e.g. macOS) the NIF is not built and
+> `LibNFC.Mock` can be used instead. Open a PN532 on I2C with
+> `LibNFC.open("pn532_i2c:/dev/i2c-1")`. The vendored libnfc is LGPL-3.0
+> (see `c_src/libnfc/COPYING`); since it is statically linked, take the
+> license implications into account before distributing binaries.
+
 <!-- MDOC -->
 
 This package provides a NIF binding to [libnfc](http://www.libnfc.org/) and some Elixir

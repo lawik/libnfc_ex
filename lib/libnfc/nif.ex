@@ -5,16 +5,30 @@ defmodule LibNFC.NIF do
 
   @on_load :on_load
 
-  # The Makefile installs the shared object to `./priv` which corresponds to the priv dir
-  # of the containing mix project.
+  # The Makefile installs the shared object to the application's priv dir.
   app = Mix.Project.config()[:app]
 
   def on_load do
-    :ok =
+    path =
       unquote(app)
       |> :code.priv_dir()
       |> :filename.join(~c"libnfc_nif")
-      |> :erlang.load_nif(0)
+
+    case :erlang.load_nif(path, 0) do
+      :ok ->
+        :ok
+
+      {:error, reason} ->
+        # The NIF only builds and loads on Linux. On other platforms (e.g.
+        # macOS development hosts, including when a crosscompiled .so for a
+        # Nerves target is present in priv), allow the module to load anyway
+        # so that LibNFC.Mock can be used; calling any NIF function will
+        # raise :not_loaded.
+        case :os.type() do
+          {:unix, :linux} -> {:error, reason}
+          _ -> :ok
+        end
+    end
   end
 
   def list_devices, do: not_loaded()
